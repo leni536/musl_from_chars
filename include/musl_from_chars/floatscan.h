@@ -1,6 +1,7 @@
 #ifndef MUSL_FROM_CHARS_FLOATSCAN_H
 #define MUSL_FROM_CHARS_FLOATSCAN_H
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <math.h>
@@ -8,6 +9,7 @@
 #include <limits.h>
 #include <errno.h>
 
+#include "chars_format.h"
 #include "shgetc.h"
 
 namespace musl_from_chars::detail {
@@ -63,7 +65,7 @@ constexpr long long scanexp(auto f, int pok)
 }
 
 
-constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int pok)
+constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int pok, chars_format fmt)
 {
 	uint32_t x[KMAX];
 	int i, j, k, a, z;
@@ -118,6 +120,10 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 	if (!gotrad) lrp=dc;
 
 	if (gotdig && (c|32)=='e') {
+		if (fmt == chars_format::fixed) {
+			f.err = EINVAL;
+			return 0;
+		}
 		e10 = scanexp(f, pok);
 		if (e10 == LLONG_MIN) {
 			if (pok) {
@@ -129,8 +135,14 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 			e10 = 0;
 		}
 		lrp += e10;
-	} else if (c>=0) {
-		shunget(f);
+	} else {
+		if (fmt == chars_format::scientific) {
+			f.err = EINVAL;
+			return 0;
+		}
+		if (c>=0) {
+			shunget(f);
+		}
 	}
 	if (!gotdig) {
 		f.err = EINVAL;
@@ -425,7 +437,7 @@ constexpr long double hexfloat(auto f, int bits, int emin, int sign, int pok)
 	return scalbnl(y, e2);
 }
 
-constexpr long double __floatscan(auto f, int prec, int pok)
+constexpr long double __floatscan(auto f, int prec, int pok, chars_format fmt)
 {
 	int sign = 1;
 	size_t i;
@@ -450,9 +462,13 @@ constexpr long double __floatscan(auto f, int prec, int pok)
 		return 0;
 	}
 
-	c=shgetc(f);
+	if (fmt == chars_format::strtod) {
+		while (isspace((c=shgetc(f))));
+	} else {
+		c=shgetc(f);
+	}
 
-	if (c=='+' || c=='-') {
+	if ((fmt == chars_format::strtod && c=='+') || c=='-') {
 		sign -= 2*(c=='-');
 		c = shgetc(f);
 	}
@@ -497,7 +513,7 @@ constexpr long double __floatscan(auto f, int prec, int pok)
 		return 0;
 	}
 
-	if (c=='0') {
+	if (c=='0' && fmt == chars_format::strtod) {
 		c = shgetc(f);
 		if ((c|32) == 'x')
 			return hexfloat(f, bits, emin, sign, pok);
@@ -505,7 +521,10 @@ constexpr long double __floatscan(auto f, int prec, int pok)
 		c = '0';
 	}
 
-	return decfloat(f, c, bits, emin, sign, pok);
+	if (fmt == chars_format::hex) {
+		return hexfloat(f, bits, emin, sign, pok);
+	}
+	return decfloat(f, c, bits, emin, sign, pok, fmt);
 }
 
 } // namespace musl_from_chars::detail
