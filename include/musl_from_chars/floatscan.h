@@ -7,7 +7,6 @@
 #include <float.h>
 #include <limits.h>
 #include <errno.h>
-#include <ctype.h>
 
 #include "shgetc.h"
 
@@ -451,7 +450,7 @@ constexpr long double __floatscan(auto f, int prec, int pok)
 		return 0;
 	}
 
-	while (isspace((c=shgetc(f))));
+	c=shgetc(f);
 
 	if (c=='+' || c=='-') {
 		sign -= 2*(c=='-');
