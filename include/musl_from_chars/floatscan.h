@@ -133,7 +133,7 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 		shunget(f);
 	}
 	if (!gotdig) {
-		errno = EINVAL;
+		f.err = EINVAL;
 		shlim(f, 0);
 		return 0;
 	}
@@ -145,11 +145,11 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 	if (lrp==dc && dc<10 && (bits>30 || x[0]>>bits==0))
 		return sign * (long double)x[0];
 	if (lrp > -emin/2) {
-		errno = ERANGE;
+		f.err = ERANGE;
 		return sign * LDBL_MAX * LDBL_MAX;
 	}
 	if (lrp < emin-2*LDBL_MANT_DIG) {
-		errno = ERANGE;
+		f.err = ERANGE;
 		return sign * LDBL_MIN * LDBL_MIN;
 	}
 
@@ -307,7 +307,7 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 			e2++;
 		}
 		if (e2+LDBL_MANT_DIG>emax || (denormal && frac))
-			errno = ERANGE;
+			f.err = ERANGE;
 	}
 
 	return scalbnl(y, e2);
@@ -388,11 +388,11 @@ constexpr long double hexfloat(auto f, int bits, int emin, int sign, int pok)
 
 	if (!x) return sign * 0.0;
 	if (e2 > -emin) {
-		errno = ERANGE;
+		f.err = ERANGE;
 		return sign * LDBL_MAX * LDBL_MAX;
 	}
 	if (e2 < emin-2*LDBL_MANT_DIG) {
-		errno = ERANGE;
+		f.err = ERANGE;
 		return sign * LDBL_MIN * LDBL_MIN;
 	}
 
@@ -420,7 +420,7 @@ constexpr long double hexfloat(auto f, int bits, int emin, int sign, int pok)
 	y = bias + sign*(long double)x + sign*y;
 	y -= bias;
 
-	if (!y) errno = ERANGE;
+	if (!y) f.err = ERANGE;
 
 	return scalbnl(y, e2);
 }
@@ -480,7 +480,7 @@ constexpr long double __floatscan(auto f, int prec, int pok)
 			if (c==')') return NAN;
 			shunget(f);
 			if (!pok) {
-				errno = EINVAL;
+				f.err = EINVAL;
 				shlim(f, 0);
 				return 0;
 			}
@@ -492,7 +492,7 @@ constexpr long double __floatscan(auto f, int prec, int pok)
 
 	if (i) {
 		shunget(f);
-		errno = EINVAL;
+		f.err = EINVAL;
 		shlim(f, 0);
 		return 0;
 	}
