@@ -74,6 +74,10 @@ from_chars_nonconst(const char* first, const char* last, auto& value, chars_form
   return from_chars_impl(first, last, value, fmt);
 }
 
+extern template std::from_chars_result from_chars_nonconst(const char*, const char*, float&, chars_format);
+extern template std::from_chars_result from_chars_nonconst(const char*, const char*, double&, chars_format);
+extern template std::from_chars_result from_chars_nonconst(const char*, const char*, long double&, chars_format);
+
 constexpr std::from_chars_result
 from_chars_impl2(const char* first, const char* last, auto& value, chars_format fmt) {
   if consteval {

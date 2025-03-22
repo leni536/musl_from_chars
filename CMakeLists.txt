@@ -7,12 +7,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(
   musl_from_chars
-  INTERFACE
+  STATIC
+  src/from_chars.cpp
 )
 
 target_include_directories(
   musl_from_chars
-  INTERFACE
+  PUBLIC
   include
 )
 
