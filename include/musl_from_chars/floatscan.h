@@ -1,3 +1,6 @@
+#ifndef MUSL_FROM_CHARS_FLOATSCAN_H
+#define MUSL_FROM_CHARS_FLOATSCAN_H
+
 #include <stdint.h>
 #include <stdio.h>
 #include <math.h>
@@ -7,33 +10,34 @@
 #include <ctype.h>
 
 #include "shgetc.h"
-#include "floatscan.h"
+
+namespace musl_from_chars::detail {
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
 
-#define LD_B1B_DIG 2
-#define LD_B1B_MAX 9007199, 254740991
-#define KMAX 128
+inline constexpr int LD_B1B_DIG = 2;
+inline constexpr uint32_t th[] = {9007199, 254740991};
+inline constexpr int KMAX = 128;
 
 #elif LDBL_MANT_DIG == 64 && LDBL_MAX_EXP == 16384
 
-#define LD_B1B_DIG 3
-#define LD_B1B_MAX 18, 446744073, 709551615
-#define KMAX 2048
+inline constexpr int LD_B1B_DIG = 3;
+inline constexpr uint32_t th[] = {18, 446744073, 709551615};
+inline constexpr int KMAX = 2048;
 
 #elif LDBL_MANT_DIG == 113 && LDBL_MAX_EXP == 16384
 
-#define LD_B1B_DIG 4
-#define LD_B1B_MAX 10384593, 717069655, 257060992, 658440191
-#define KMAX 2048
+inline constexpr int LD_B1B_DIG = 4;
+inline constexpr uint32_t th[] = {10384593, 717069655, 257060992, 658440191};
+inline constexpr int KMAX = 2048;
 
 #else
 #error Unsupported long double representation
 #endif
 
-#define MASK (KMAX-1)
+inline constexpr int MASK = (KMAX-1);
 
-static long long scanexp(FILE *f, int pok)
+constexpr long long scanexp(auto f, int pok)
 {
 	int c;
 	int x;
@@ -60,10 +64,9 @@ static long long scanexp(FILE *f, int pok)
 }
 
 
-static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int pok)
+constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int pok)
 {
 	uint32_t x[KMAX];
-	static const uint32_t th[] = { LD_B1B_MAX };
 	int i, j, k, a, z;
 	long long lrp=0, dc=0;
 	long long e10=0;
@@ -76,7 +79,7 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 	long double y;
 	long double frac=0;
 	long double bias=0;
-	static const int p10s[] = { 10, 100, 1000, 10000,
+	static constexpr int p10s[] = { 10, 100, 1000, 10000,
 		100000, 1000000, 10000000, 100000000 };
 
 	j=0;
@@ -311,7 +314,7 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 	return scalbnl(y, e2);
 }
 
-static long double hexfloat(FILE *f, int bits, int emin, int sign, int pok)
+constexpr long double hexfloat(auto f, int bits, int emin, int sign, int pok)
 {
 	uint32_t x = 0;
 	long double y = 0;
@@ -423,7 +426,7 @@ static long double hexfloat(FILE *f, int bits, int emin, int sign, int pok)
 	return scalbnl(y, e2);
 }
 
-long double __floatscan(FILE *f, int prec, int pok)
+constexpr long double __floatscan(auto f, int prec, int pok)
 {
 	int sign = 1;
 	size_t i;
@@ -505,3 +508,7 @@ long double __floatscan(FILE *f, int prec, int pok)
 
 	return decfloat(f, c, bits, emin, sign, pok);
 }
+
+} // namespace musl_from_chars::detail
+
+#endif // MUSL_FROM_CHARS_FLOATSCAN_H
