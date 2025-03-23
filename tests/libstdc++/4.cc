@@ -28,10 +28,29 @@
 #include <cassert>
 #define VERIFY assert
 
+#include <charconv>
 #include <musl_from_chars/from_chars.h>
 namespace mfc = musl_from_chars;
 
 // Test mfc::from_chars floating-point conversions.
+
+template <typename T>
+requires std::is_integral_v<T>
+static constexpr
+std::string
+to_string(T val)
+{
+  using Limits = std::numeric_limits<T>;
+  std::string s(Limits::digits10+3, '\0');
+  auto ret =
+    std::to_chars(
+      s.data(),
+      s.data() + s.size(),
+      val
+    );
+  s.resize(ret.ptr - s.data());
+  return s;
+}
 
 #if __cpp_lib_to_chars >= 201611L
 constexpr void
@@ -194,20 +213,6 @@ test04()
   VERIFY( d == 50 );
 }
 
-using std::to_string;
-
-#ifdef __GLIBCXX_TYPE_INT_N_0
-std::string
-to_string(unsigned __GLIBCXX_TYPE_INT_N_0 val)
-{
-  using Limits = std::numeric_limits<unsigned __GLIBCXX_TYPE_INT_N_0>;
-  std::string s(Limits::digits10+2, '0');
-  for (auto iter = s.end(); val != 0; val /= 10)
-    *--iter = '0' + (val % 10);
-  return s;
-}
-#endif
-
 constexpr void
 test05()
 {
@@ -306,9 +311,11 @@ test_max_mantissa()
   if (Float_limits::is_iec559 && Float_limits::digits < UInt_limits::digits)
   {
 #ifdef _GLIBCXX_USE_C99_MATH_FUNCS
-    std::printf("Testing %d-bit float, using %zu-bit integer\n",
-	Float_limits::digits + (int)std::log2(Float_limits::max_exponent) + 1,
-	sizeof(UIntT) * __CHAR_BIT__);
+    if !consteval{
+      std::printf("Testing %d-bit float, using %zu-bit integer\n",
+        Float_limits::digits + (int)std::log2(Float_limits::max_exponent) + 1,
+        sizeof(UIntT) * __CHAR_BIT__);
+    }
 #endif
 
     std::from_chars_result res;
@@ -365,12 +372,12 @@ test06()
 }
 #endif
 
-//static_assert((test01(), true));
-//static_assert((test02(), true));
-//static_assert((test03(), true));
-//static_assert((test04(), true));
-//static_assert((test05(), true));
-//static_assert((test06(), true));
+static_assert((test01(), true));
+static_assert((test02(), true));
+static_assert((test03(), true));
+static_assert((test04(), true));
+static_assert((test05(), true));
+static_assert((test06(), true));
 
 int
 main()
