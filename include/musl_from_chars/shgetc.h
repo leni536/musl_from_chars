@@ -4,22 +4,29 @@
 #include <stdio.h>
 #include <string_view>
 
+#include "fake_file.h"
+
 namespace musl_from_chars::detail {
 
-constexpr void shlim(std::string_view& sv, off_t) noexcept {}
+constexpr void shlim(fake_file& f, off_t) noexcept {}
 
-constexpr int shgetc(std::string_view& sv) noexcept {
-  if (sv.empty()) {
+constexpr int shgetc(fake_file& f) noexcept {
+  if (f.view.empty()) {
+    f.eof_reached = true;
     return EOF;
   }
-  int ret = sv[0];
-  sv.remove_prefix(1);
+  int ret = f.view[0];
+  f.view.remove_prefix(1);
   return ret;
 }
 
 // Precondition: sv.data()-1 is valid
-constexpr void shunget(std::string_view& sv) noexcept {
-  sv = std::string_view(sv.data()-1, sv.size() + 1);
+constexpr void shunget(fake_file& f) noexcept {
+  if (f.eof_reached) {
+    f.eof_reached = false;
+    return;
+  }
+  f.view = std::string_view(f.view.data()-1, f.view.size() + 1);
 }
 
 } // namespace musl_from_chars::detail

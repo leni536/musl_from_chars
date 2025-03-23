@@ -38,7 +38,7 @@ inline constexpr int KMAX = 2048;
 
 inline constexpr int MASK = (KMAX-1);
 
-constexpr long long scanexp(auto f, int pok)
+constexpr long long scanexp(auto& f, int pok)
 {
 	int c;
 	int x;
@@ -65,7 +65,7 @@ constexpr long long scanexp(auto f, int pok)
 }
 
 
-constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int pok, chars_format fmt)
+constexpr long double decfloat(auto& f, int c, int bits, int emin, int sign, int pok, chars_format fmt)
 {
 	uint32_t x[KMAX];
 	int i, j, k, a, z;
@@ -119,11 +119,7 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 	}
 	if (!gotrad) lrp=dc;
 
-	if (gotdig && (c|32)=='e') {
-		if (fmt == chars_format::fixed) {
-			f.err = EINVAL;
-			return 0;
-		}
+	if (gotdig && (c|32)=='e' && fmt != chars_format::fixed) {
 		e10 = scanexp(f, pok);
 		if (e10 == LLONG_MIN) {
 			if (pok) {
@@ -325,7 +321,7 @@ constexpr long double decfloat(auto f, int c, int bits, int emin, int sign, int 
 	return scalbnl(y, e2);
 }
 
-constexpr long double hexfloat(auto f, int bits, int emin, int sign, int pok)
+constexpr long double hexfloat(auto& f, int bits, int emin, int sign, int pok)
 {
 	uint32_t x = 0;
 	long double y = 0;
@@ -437,7 +433,7 @@ constexpr long double hexfloat(auto f, int bits, int emin, int sign, int pok)
 	return scalbnl(y, e2);
 }
 
-constexpr long double __floatscan(auto f, int prec, int pok, chars_format fmt)
+constexpr long double __floatscan(auto& f, int prec, int pok, chars_format fmt)
 {
 	int sign = 1;
 	size_t i;
@@ -522,6 +518,7 @@ constexpr long double __floatscan(auto f, int prec, int pok, chars_format fmt)
 	}
 
 	if (fmt == chars_format::hex) {
+		shunget(f);
 		return hexfloat(f, bits, emin, sign, pok);
 	}
 	return decfloat(f, c, bits, emin, sign, pok, fmt);

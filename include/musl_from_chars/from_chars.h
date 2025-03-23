@@ -7,6 +7,7 @@
 
 #include "chars_format.h"
 #include "floatscan.h"
+#include "fake_file.h"
 
 namespace musl_from_chars {
 
@@ -45,16 +46,14 @@ from_chars_impl(const char* first, const char* last, auto& value, chars_format f
     }
   } guard;
 
-  struct my_string_view : std::string_view {
-    using std::string_view::string_view;
-    int err = 0;
+  auto input = fake_file{
+    .view{first, last}
   };
-  auto input = my_string_view(first, last);
   const auto res = __floatscan(input, precision<std::remove_reference_t<decltype(value)>>, 1, fmt);
   switch (input.err) {
     case 0:
         value = res;
-        return {.ptr = input.data()};
+        return {.ptr = input.view.data()};
     case EINVAL:
         return {
           .ptr = first,
@@ -62,7 +61,7 @@ from_chars_impl(const char* first, const char* last, auto& value, chars_format f
         };
     case ERANGE:
         return {
-          .ptr = input.data(),
+          .ptr = input.view.data(),
           .ec = std::errc::result_out_of_range,
         };
   }

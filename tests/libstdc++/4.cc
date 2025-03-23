@@ -25,55 +25,59 @@
 #include <limits>
 #include <cmath>
 #include <cstdlib>
-#include <testsuite_hooks.h>
+#include <cassert>
+#define VERIFY assert
 
-// Test std::from_chars floating-point conversions.
+#include <musl_from_chars/from_chars.h>
+namespace mfc = musl_from_chars;
+
+// Test mfc::from_chars floating-point conversions.
 
 #if __cpp_lib_to_chars >= 201611L
-void
+constexpr void
 test01()
 {
   std::string s;
   double d;
   std::from_chars_result res;
 
-  for (auto fmt : { std::chars_format::fixed, std::chars_format::scientific,
-		    std::chars_format::general, std::chars_format::hex })
+  for (auto fmt : { mfc::chars_format::fixed, mfc::chars_format::scientific,
+		    mfc::chars_format::general, mfc::chars_format::hex })
   {
     s = "Info";
-    res = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
     VERIFY( std::isinf(d) );
     VERIFY( res.ptr == s.data() + 3 );
     VERIFY( res.ec == std::errc{} );
 
     s = "-INFIN";
-    res = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
     VERIFY( std::isinf(d) );
     VERIFY( d < 0 );
     VERIFY( res.ptr == s.data() + 4 );
     VERIFY( res.ec == std::errc{} );
 
     s = "InFiNiTy aNd BeYoNd";
-    res = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
     VERIFY( std::isinf(d) );
     VERIFY( res.ptr == s.data() + 8 );
     VERIFY( res.ec == std::errc{} );
 
     s = "nAn";
-    res = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
     VERIFY( std::isnan(d) );
     VERIFY( res.ptr == s.data() + 3 );
     VERIFY( res.ec == std::errc{} );
 
     s = "-NAN()";
-    res = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
     VERIFY( std::isnan(d) );
     VERIFY( res.ptr == s.data() + s.length() );
     VERIFY( res.ec == std::errc{} );
   }
 }
 
-void
+constexpr void
 test02()
 {
   std::string s;
@@ -81,41 +85,41 @@ test02()
   std::from_chars_result res;
 
   s = "0x123";
-  res = std::from_chars(s.data(), s.data() + s.length(), d);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( d == 0.0 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::fixed);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::fixed);
   VERIFY( d == 0.0 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::scientific);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::scientific);
   VERIFY( d == 1.0 );
   VERIFY( res.ptr == s.data() );
   VERIFY( res.ec == std::errc::invalid_argument );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::general);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::general);
   VERIFY( d == 0.0 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::hex);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::hex);
   VERIFY( d == 0.0 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 }
 
-void
+constexpr void
 test03()
 {
   std::string s;
@@ -123,60 +127,60 @@ test03()
   std::from_chars_result res;
 
   s = "0.5e+2azzz";
-  res = std::from_chars(s.data(), s.data() + s.length(), d);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( d == 0.5e+2 );
   VERIFY( res.ptr == s.data() + s.length() - 1 - 3 );
   VERIFY( res.ec == std::errc{} );
 
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::fixed);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::fixed);
   VERIFY( d == 0.5 );
   VERIFY( res.ptr == s.data() + 3 );
   VERIFY( res.ec == std::errc{} );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::scientific);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::scientific);
   VERIFY( d == 0.5e+2 );
   VERIFY( res.ptr == s.data() + s.length() - 1 - 3 );
   VERIFY( res.ec == std::errc{} );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::general);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::general);
   VERIFY( d == 0.5e+2 );
   VERIFY( res.ptr == s.data() + s.length() - 1 - 3 );
   VERIFY( res.ec == std::errc{} );
 
   d = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::hex);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::hex);
   VERIFY( d == 0x0.5Ep0 );
   VERIFY( res.ptr == s.data() + 4 );
   VERIFY( res.ec == std::errc{} );
 
   s = "1.Ap-2zzz";
-  res = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::hex);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::hex);
   VERIFY( d == 0.40625 );
   VERIFY( res.ptr == s.data() + s.length() - 3 );
   VERIFY( res.ec == std::errc{} );
 }
 
-void
+constexpr void
 test04()
 {
   // Huge input strings
   std::string s(1000, '0');
   double d = 1.0;
   std::from_chars_result res;
-  res = std::from_chars(s.data(), s.data() + s.length(), d);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( res.ptr == s.data() + s.length() );
   VERIFY( res.ec == std::errc{} );
   VERIFY( d == 0.0 );
 
   s += ".5";
-  res = std::from_chars(s.data(), s.data() + s.length(), d);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( res.ptr == s.data() + s.length() );
   VERIFY( res.ec == std::errc{} );
   VERIFY( d == 0.5 );
@@ -184,7 +188,7 @@ test04()
   s += "e2";
   auto len = s.length();
   s += std::string(1000, 'a');
-  res = std::from_chars(s.data(), s.data() + s.length(), d);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( res.ptr == s.data() + len );
   VERIFY( res.ec == std::errc{} );
   VERIFY( d == 50 );
@@ -204,7 +208,7 @@ to_string(unsigned __GLIBCXX_TYPE_INT_N_0 val)
 }
 #endif
 
-void
+constexpr void
 test05()
 {
   std::from_chars_result res;
@@ -222,24 +226,24 @@ test05()
     const char* s1 = s.c_str();
     const char* s1_end = s1 + len;
 
-    for (auto fmt : { std::chars_format::fixed,
-		      std::chars_format::general,
-		      std::chars_format::hex })
+    for (auto fmt : { mfc::chars_format::fixed,
+		      mfc::chars_format::general,
+		      mfc::chars_format::hex })
     {
-      if (fmt == std::chars_format::hex && i > 9)
+      if (fmt == mfc::chars_format::hex && i > 9)
 	continue;
 
-      res = std::from_chars(s1, s1_end, flt, fmt);
+      res = mfc::from_chars(s1, s1_end, flt, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s1_end );
       VERIFY( flt == i );
 
-      res = std::from_chars(s1, s1_end, dbl, fmt);
+      res = mfc::from_chars(s1, s1_end, dbl, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s1_end );
       VERIFY( dbl == i );
 
-      res = std::from_chars(s1, s1_end, ldbl, fmt);
+      res = mfc::from_chars(s1, s1_end, ldbl, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s1_end );
       VERIFY( ldbl == i );
@@ -256,35 +260,35 @@ test05()
     const char s3[] = { *s1, '0', 'e', '-', '0', '0', '1' };
     const char* s3_end = s3 + sizeof(s3);
 
-    for (auto fmt : { std::chars_format::scientific,
-		      std::chars_format::general })
+    for (auto fmt : { mfc::chars_format::scientific,
+		      mfc::chars_format::general })
     {
-      res = std::from_chars(s2, s2_end, flt, fmt);
+      res = mfc::from_chars(s2, s2_end, flt, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s2_end );
       VERIFY( flt == i );
 
-      res = std::from_chars(s3, s3_end, flt, fmt);
+      res = mfc::from_chars(s3, s3_end, flt, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s3_end );
       VERIFY( flt == i );
 
-      res = std::from_chars(s2, s2_end, dbl, fmt);
+      res = mfc::from_chars(s2, s2_end, dbl, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s2_end );
       VERIFY( dbl == i );
 
-      res = std::from_chars(s3, s3_end, dbl, fmt);
+      res = mfc::from_chars(s3, s3_end, dbl, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s3_end );
       VERIFY( dbl == i );
 
-      res = std::from_chars(s2, s2_end, ldbl, fmt);
+      res = mfc::from_chars(s2, s2_end, ldbl, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s2_end );
       VERIFY( ldbl == i );
 
-      res = std::from_chars(s3, s3_end, ldbl, fmt);
+      res = mfc::from_chars(s3, s3_end, ldbl, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s3_end );
       VERIFY( ldbl == i );
@@ -293,7 +297,7 @@ test05()
 }
 
 template<typename FloatT, typename UIntT>
-void
+constexpr void
 test_max_mantissa()
 {
   using Float_limits = std::numeric_limits<FloatT>;
@@ -317,10 +321,10 @@ test_max_mantissa()
       std::string s = to_string(val);
       auto len = s.length();
       s += "000"; // these should be ignored
-      for (auto fmt : { std::chars_format::fixed,
-			std::chars_format::general })
+      for (auto fmt : { mfc::chars_format::fixed,
+			mfc::chars_format::general })
       {
-	res = std::from_chars(s.data(), s.data() + len, flt, fmt);
+	res = mfc::from_chars(s.data(), s.data() + len, flt, fmt);
 	VERIFY( res.ec == std::errc{} );
 	VERIFY( res.ptr == s.data() + len );
 	VERIFY( flt == val );
@@ -330,10 +334,10 @@ test_max_mantissa()
       s += "e+000";
       len = s.length();
       s += "111";
-      for (auto fmt : { std::chars_format::scientific,
-			std::chars_format::general })
+      for (auto fmt : { mfc::chars_format::scientific,
+			mfc::chars_format::general })
       {
-	res = std::from_chars(s.data(), s.data() + len, flt, fmt);
+	res = mfc::from_chars(s.data(), s.data() + len, flt, fmt);
 	VERIFY( res.ec == std::errc{} );
 	VERIFY( res.ptr == s.data() + len );
 	VERIFY( flt == val );
@@ -341,7 +345,7 @@ test_max_mantissa()
 	std::string s2 = s.substr(0, len - 5);
 	s2.insert(s2.begin() + orig_len - 1, '.');
 	s2 += "e000000000001";
-	res = std::from_chars(s.data(), s.data() + len, flt, fmt);
+	res = mfc::from_chars(s.data(), s.data() + len, flt, fmt);
 	VERIFY( res.ec == std::errc{} );
 	VERIFY( res.ptr == s.data() + len );
 	VERIFY( flt == val );
@@ -350,7 +354,7 @@ test_max_mantissa()
   }
 }
 
-void
+constexpr void
 test06()
 {
   test_max_mantissa<float, unsigned long>();
@@ -360,6 +364,13 @@ test06()
 #endif
 }
 #endif
+
+//static_assert((test01(), true));
+//static_assert((test02(), true));
+//static_assert((test03(), true));
+//static_assert((test04(), true));
+//static_assert((test05(), true));
+//static_assert((test06(), true));
 
 int
 main()
