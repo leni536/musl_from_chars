@@ -12,6 +12,8 @@
 #include "chars_format.h"
 #include "shgetc.h"
 
+#include <limits>
+
 namespace musl_from_chars::detail {
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
@@ -158,7 +160,7 @@ constexpr long double decfloat(auto& f, int c, int bits, int emin, int sign, int
 		return sign * (long double)x[0];
 	if (lrp > -emin/2) {
 		f.err = ERANGE;
-		return sign * LDBL_MAX * LDBL_MAX;
+		return sign * std::numeric_limits<long double>::infinity();
 	}
 	if (lrp < emin-2*LDBL_MANT_DIG) {
 		f.err = ERANGE;
@@ -407,7 +409,7 @@ constexpr long double hexfloat(auto& f, int bits, int emin, int sign, int pok, c
 	if (!x) return sign * 0.0;
 	if (e2 > -emin) {
 		f.err = ERANGE;
-		return sign * LDBL_MAX * LDBL_MAX;
+		return sign * std::numeric_limits<long double>::infinity();
 	}
 	if (e2 < emin-2*LDBL_MANT_DIG) {
 		f.err = ERANGE;

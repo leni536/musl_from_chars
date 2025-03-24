@@ -30,7 +30,7 @@ namespace mfc = musl_from_chars;
 // Test mfc::from_chars error handling.
 
 #if __cpp_lib_to_chars >= 201611L
-void
+constexpr void
 test01()
 {
   std::from_chars_result r;
@@ -92,7 +92,7 @@ test01()
   }
 }
 
-void
+constexpr void
 test02()
 {
   std::from_chars_result r;
@@ -119,7 +119,7 @@ test02()
   VERIFY( f == 0.5 );
 }
 
-void
+constexpr void
 test03()
 {
   double d = 0.5;
@@ -137,7 +137,7 @@ test03()
   VERIFY( d == 0.5 );
 }
 
-void
+constexpr void
 test04()
 {
   std::from_chars_result res;
@@ -158,6 +158,11 @@ test04()
   }
 }
 #endif
+
+static_assert((test01(), true));
+static_assert((test02(), true));
+static_assert((test03(), true));
+static_assert((test04(), true));
 
 int
 main()
