@@ -30,3 +30,14 @@ target_link_libraries(
   PUBLIC
   musl_from_chars
 )
+
+add_executable(
+  test-libstdc++-7
+  7.cc
+)
+
+target_link_libraries(
+  test-libstdc++-7
+  PUBLIC
+  musl_from_chars
+)
