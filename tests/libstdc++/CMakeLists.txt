@@ -41,3 +41,15 @@ target_link_libraries(
   PUBLIC
   musl_from_chars
 )
+
+add_executable(
+  test-libstdc++-8
+  EXCLUDE_FROM_ALL
+  8.cc
+)
+
+target_link_libraries(
+  test-libstdc++-8
+  PUBLIC
+  musl_from_chars
+)

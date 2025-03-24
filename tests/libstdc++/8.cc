@@ -25,9 +25,13 @@
 #include <stdfloat>
 #include <cmath>
 #include <cstdlib>
-#include <testsuite_hooks.h>
+#include <cassert>
+#define VERIFY assert
 
-// Test std::from_chars floating-point conversions.
+#include <musl_from_chars/from_chars.h>
+namespace mfc = musl_from_chars;
+
+// Test mfc::from_chars floating-point conversions.
 
 #if __cpp_lib_to_chars >= 201611L
 #if defined(__STDCPP_FLOAT64_T__) && defined(_GLIBCXX_DOUBLE_IS_IEEE_BINARY64)
@@ -38,36 +42,36 @@ test01()
   std::float64_t f64;
   std::from_chars_result res;
 
-  for (auto fmt : { std::chars_format::fixed, std::chars_format::scientific,
-		    std::chars_format::general, std::chars_format::hex })
+  for (auto fmt : { mfc::chars_format::fixed, mfc::chars_format::scientific,
+		    mfc::chars_format::general, mfc::chars_format::hex })
   {
     s = "Info";
-    res = std::from_chars(s.data(), s.data() + s.length(), f64, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), f64, fmt);
     VERIFY( std::isinf(f64) );
     VERIFY( res.ptr == s.data() + 3 );
     VERIFY( res.ec == std::errc{} );
 
     s = "-INFIN";
-    res = std::from_chars(s.data(), s.data() + s.length(), f64, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), f64, fmt);
     VERIFY( std::isinf(f64) );
     VERIFY( f64 < 0 );
     VERIFY( res.ptr == s.data() + 4 );
     VERIFY( res.ec == std::errc{} );
 
     s = "InFiNiTy aNd BeYoNd";
-    res = std::from_chars(s.data(), s.data() + s.length(), f64, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), f64, fmt);
     VERIFY( std::isinf(f64) );
     VERIFY( res.ptr == s.data() + 8 );
     VERIFY( res.ec == std::errc{} );
 
     s = "nAn";
-    res = std::from_chars(s.data(), s.data() + s.length(), f64, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), f64, fmt);
     VERIFY( std::isnan(f64) );
     VERIFY( res.ptr == s.data() + 3 );
     VERIFY( res.ec == std::errc{} );
 
     s = "-NAN()";
-    res = std::from_chars(s.data(), s.data() + s.length(), f64, fmt);
+    res = mfc::from_chars(s.data(), s.data() + s.length(), f64, fmt);
     VERIFY( std::isnan(f64) );
     VERIFY( res.ptr == s.data() + s.length() );
     VERIFY( res.ec == std::errc{} );
@@ -82,35 +86,35 @@ test02()
   std::from_chars_result res;
 
   s = "0x123";
-  res = std::from_chars(s.data(), s.data() + s.length(), f64);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64);
   VERIFY( f64 == 0.0f64 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 
   f64 = 1.0f64;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::fixed);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::fixed);
   VERIFY( f64 == 0.0f64 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 
   f64 = 1.0f64;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::scientific);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::scientific);
   VERIFY( f64 == 1.0f64 );
   VERIFY( res.ptr == s.data() );
   VERIFY( res.ec == std::errc::invalid_argument );
 
   f64 = 1.0f64;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::general);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::general);
   VERIFY( f64 == 0.0f64 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
 
   f64 = 1.0f64;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::hex);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::hex);
   VERIFY( f64 == 0.0f64 );
   VERIFY( res.ptr == s.data() + 1 );
   VERIFY( res.ec == std::errc{} );
@@ -124,41 +128,41 @@ test03()
   std::from_chars_result res;
 
   s = "0.5e+2azzz";
-  res = std::from_chars(s.data(), s.data() + s.length(), f64);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64);
   VERIFY( f64 == 0.5e+2f64 );
   VERIFY( res.ptr == s.data() + s.length() - 1 - 3 );
   VERIFY( res.ec == std::errc{} );
 
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::fixed);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::fixed);
   VERIFY( f64 == 0.5f64 );
   VERIFY( res.ptr == s.data() + 3 );
   VERIFY( res.ec == std::errc{} );
 
   f64 = 1.0f64;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::scientific);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::scientific);
   VERIFY( f64 == 0.5e+2f64 );
   VERIFY( res.ptr == s.data() + s.length() - 1 - 3 );
   VERIFY( res.ec == std::errc{} );
 
   f64 = 1.0f64;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::general);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::general);
   VERIFY( f64 == 0.5e+2f64 );
   VERIFY( res.ptr == s.data() + s.length() - 1 - 3 );
   VERIFY( res.ec == std::errc{} );
 
   f64 = 1.0;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::hex);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::hex);
   VERIFY( f64 == 0x0.5Ep0f64 );
   VERIFY( res.ptr == s.data() + 4 );
   VERIFY( res.ec == std::errc{} );
 
   s = "1.Ap-2zzz";
-  res = std::from_chars(s.data(), s.data() + s.length(), f64,
-			std::chars_format::hex);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64,
+			mfc::chars_format::hex);
   VERIFY( f64 == 0.40625f64 );
   VERIFY( res.ptr == s.data() + s.length() - 3 );
   VERIFY( res.ec == std::errc{} );
@@ -171,13 +175,13 @@ test04()
   std::string s(1000, '0');
   std::float64_t f64 = 1.0f64;
   std::from_chars_result res;
-  res = std::from_chars(s.data(), s.data() + s.length(), f64);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64);
   VERIFY( res.ptr == s.data() + s.length() );
   VERIFY( res.ec == std::errc{} );
   VERIFY( f64 == 0.0f64 );
 
   s += ".5";
-  res = std::from_chars(s.data(), s.data() + s.length(), f64);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64);
   VERIFY( res.ptr == s.data() + s.length() );
   VERIFY( res.ec == std::errc{} );
   VERIFY( f64 == 0.5f64 );
@@ -185,7 +189,7 @@ test04()
   s += "e2";
   auto len = s.length();
   s += std::string(1000, 'a');
-  res = std::from_chars(s.data(), s.data() + s.length(), f64);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), f64);
   VERIFY( res.ptr == s.data() + len );
   VERIFY( res.ec == std::errc{} );
   VERIFY( f64 == 50.f64 );
@@ -223,14 +227,14 @@ test_small_num()
     const char* s1 = s.c_str();
     const char* s1_end = s1 + len;
 
-    for (auto fmt : { std::chars_format::fixed,
-		      std::chars_format::general,
-		      std::chars_format::hex })
+    for (auto fmt : { mfc::chars_format::fixed,
+		      mfc::chars_format::general,
+		      mfc::chars_format::hex })
     {
-      if (fmt == std::chars_format::hex && i > 9)
+      if (fmt == mfc::chars_format::hex && i > 9)
 	continue;
 
-      res = std::from_chars(s1, s1_end, flt, fmt);
+      res = mfc::from_chars(s1, s1_end, flt, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s1_end );
       VERIFY( flt == i );
@@ -247,15 +251,15 @@ test_small_num()
     const char s3[] = { *s1, '0', 'e', '-', '0', '0', '1' };
     const char* s3_end = s3 + sizeof(s3);
 
-    for (auto fmt : { std::chars_format::scientific,
-		      std::chars_format::general })
+    for (auto fmt : { mfc::chars_format::scientific,
+		      mfc::chars_format::general })
     {
-      res = std::from_chars(s2, s2_end, flt, fmt);
+      res = mfc::from_chars(s2, s2_end, flt, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s2_end );
       VERIFY( flt == i );
 
-      res = std::from_chars(s3, s3_end, flt, fmt);
+      res = mfc::from_chars(s3, s3_end, flt, fmt);
       VERIFY( res.ec == std::errc{} );
       VERIFY( res.ptr == s3_end );
       VERIFY( flt == i );
@@ -302,10 +306,10 @@ test_max_mantissa()
       std::string s = to_string(val);
       auto len = s.length();
       s += "000"; // these should be ignored
-      for (auto fmt : { std::chars_format::fixed,
-			std::chars_format::general })
+      for (auto fmt : { mfc::chars_format::fixed,
+			mfc::chars_format::general })
       {
-	res = std::from_chars(s.data(), s.data() + len, flt, fmt);
+	res = mfc::from_chars(s.data(), s.data() + len, flt, fmt);
 	VERIFY( res.ec == std::errc{} );
 	VERIFY( res.ptr == s.data() + len );
 	VERIFY( flt == val );
@@ -315,10 +319,10 @@ test_max_mantissa()
       s += "e+000";
       len = s.length();
       s += "111";
-      for (auto fmt : { std::chars_format::scientific,
-			std::chars_format::general })
+      for (auto fmt : { mfc::chars_format::scientific,
+			mfc::chars_format::general })
       {
-	res = std::from_chars(s.data(), s.data() + len, flt, fmt);
+	res = mfc::from_chars(s.data(), s.data() + len, flt, fmt);
 	VERIFY( res.ec == std::errc{} );
 	VERIFY( res.ptr == s.data() + len );
 	VERIFY( flt == val );
@@ -326,7 +330,7 @@ test_max_mantissa()
 	std::string s2 = s.substr(0, len - 5);
 	s2.insert(s2.begin() + orig_len - 1, '.');
 	s2 += "e000000000001";
-	res = std::from_chars(s.data(), s.data() + len, flt, fmt);
+	res = mfc::from_chars(s.data(), s.data() + len, flt, fmt);
 	VERIFY( res.ec == std::errc{} );
 	VERIFY( res.ptr == s.data() + len );
 	VERIFY( flt == val );
