@@ -22,27 +22,35 @@
 #include <charconv>
 #include <string>
 #include <cfenv>
-#include <testsuite_hooks.h>
+#include <cassert>
+#define VERIFY assert
 
-void
+#include <musl_from_chars/from_chars.h>
+namespace mfc = musl_from_chars;
+
+constexpr void
 test01()
 {
 #if __cpp_lib_to_chars >= 201611L
 #if _GLIBCXX_USE_C99_FENV_TR1
   double d;
 #ifdef FE_DOWNWARD
-  std::fesetround(FE_DOWNWARD);
+  if !consteval {
+    std::fesetround(FE_DOWNWARD);
+  }
 #endif
   const std::string s = "0.099999999999999999999999999";
-  auto res = std::from_chars(s.data(), s.data() + s.length(), d);
+  auto res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( res.ec == std::errc{} );
   VERIFY( res.ptr == s.data() + s.length() );
-  // std::from_chars should ignore the current rounding mode
+  // mfc::from_chars should ignore the current rounding mode
   // and always round to nearest.
   VERIFY( d == (double) 0.1 );
 #endif
 #endif
 }
+
+static_assert((test01(), true));
 
 int
 main()
