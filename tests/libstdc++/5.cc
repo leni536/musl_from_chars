@@ -21,9 +21,13 @@
 #include <charconv>
 #include <string>
 #include <cmath>
-#include <testsuite_hooks.h>
+#include <cassert>
+#define VERIFY assert
 
-// Test std::from_chars error handling.
+#include <musl_from_chars/from_chars.h>
+namespace mfc = musl_from_chars;
+
+// Test mfc::from_chars error handling.
 
 #if __cpp_lib_to_chars >= 201611L
 void
@@ -38,10 +42,10 @@ test01()
 		  "in", "inch", "+inf", "na", "nam", "+nan" })
   {
     s = p;
-    for (auto fmt : { std::chars_format::fixed, std::chars_format::scientific,
-		      std::chars_format::general, std::chars_format::hex })
+    for (auto fmt : { mfc::chars_format::fixed, mfc::chars_format::scientific,
+		      mfc::chars_format::general, mfc::chars_format::hex })
     {
-      r = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+      r = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
       VERIFY( r.ec == std::errc::invalid_argument );
       VERIFY( r.ptr == s.data() );
       VERIFY( d == (double) 3.2 );
@@ -51,10 +55,10 @@ test01()
   for (auto p : { ".e1", "-.e1" }) // These are valid patterns for hex format
   {
     s = p;
-    for (auto fmt : { std::chars_format::fixed, std::chars_format::scientific,
-		      std::chars_format::general })
+    for (auto fmt : { mfc::chars_format::fixed, mfc::chars_format::scientific,
+		      mfc::chars_format::general })
     {
-      r = std::from_chars(s.data(), s.data() + s.length(), d, fmt);
+      r = mfc::from_chars(s.data(), s.data() + s.length(), d, fmt);
       VERIFY( r.ec == std::errc::invalid_argument );
       VERIFY( r.ptr == s.data() );
       VERIFY( d == (double) 3.2 );
@@ -65,8 +69,8 @@ test01()
   for (auto p : { "1.2", "-1.2", "1.2e", "-1.2e", "1.2e-", "-1.2e+" })
   {
     s = p;
-    r = std::from_chars(s.data(), s.data() + s.length(), d,
-			std::chars_format::scientific);
+    r = mfc::from_chars(s.data(), s.data() + s.length(), d,
+			mfc::chars_format::scientific);
     VERIFY( r.ec == std::errc::invalid_argument );
     VERIFY( r.ptr == s.data() );
     VERIFY( d == (double) 3.2 );
@@ -77,10 +81,10 @@ test01()
 		  "inf", "-inf", "nan", "-nan" })
   {
     s = p;
-    for (auto fmt : { std::chars_format::fixed, std::chars_format::scientific,
-		      std::chars_format::general, std::chars_format::hex })
+    for (auto fmt : { mfc::chars_format::fixed, mfc::chars_format::scientific,
+		      mfc::chars_format::general, mfc::chars_format::hex })
     {
-      r = std::from_chars(s.data(), s.data() + s.length() - 1, d, fmt);
+      r = mfc::from_chars(s.data(), s.data() + s.length() - 1, d, fmt);
       VERIFY( r.ec == std::errc::invalid_argument );
       VERIFY( r.ptr == s.data() );
       VERIFY( d == (double) 3.2 );
@@ -97,19 +101,19 @@ test02()
   float f = 0.5;
   // Overflow
   s = "99999999999999999e999999999999999999";
-  r = std::from_chars(s.data(), s.data() + s.length(), f);
+  r = mfc::from_chars(s.data(), s.data() + s.length(), f);
   VERIFY( r.ec == std::errc::result_out_of_range );
   VERIFY( r.ptr == s.data() + s.length() );
   VERIFY( f == 0.5 );
 
   s += '*';
-  r = std::from_chars(s.data(), s.data() + s.length(), f);
+  r = mfc::from_chars(s.data(), s.data() + s.length(), f);
   VERIFY( r.ec == std::errc::result_out_of_range );
   VERIFY( r.ptr == s.data() + s.length() - 1 );
   VERIFY( f == 0.5 );
 
   s.insert(s.begin(), '-');
-  r = std::from_chars(s.data(), s.data() + s.length(), f);
+  r = mfc::from_chars(s.data(), s.data() + s.length(), f);
   VERIFY( r.ec == std::errc::result_out_of_range );
   VERIFY( r.ptr == s.data() + s.length() - 1 );
   VERIFY( f == 0.5 );
@@ -122,12 +126,12 @@ test03()
   // Underflow
   std::string s("-1.2345e-9999zzz");
   std::from_chars_result res;
-  res = std::from_chars(s.data(), s.data() + s.length(), d);
+  res = mfc::from_chars(s.data(), s.data() + s.length(), d);
   VERIFY( res.ptr == s.data() + s.length() - 3 );
   VERIFY( res.ec == std::errc::result_out_of_range );
   VERIFY( d == 0.5 );
 
-  res = std::from_chars(s.data() + 1, s.data() + s.length(), d);
+  res = mfc::from_chars(s.data() + 1, s.data() + s.length(), d);
   VERIFY( res.ptr == s.data() + s.length() - 3 );
   VERIFY( res.ec == std::errc::result_out_of_range );
   VERIFY( d == 0.5 );
@@ -145,8 +149,8 @@ test04()
     {
       auto str = z.substr(len) + s;
       double d = 99.0;
-      res = std::from_chars(str.data(), str.data() + str.length(), d,
-			    std::chars_format::scientific);
+      res = mfc::from_chars(str.data(), str.data() + str.length(), d,
+			    mfc::chars_format::scientific);
       VERIFY( res.ec == std::errc::invalid_argument );
       VERIFY( res.ptr == str.data() );
       VERIFY( d == 99.0 );

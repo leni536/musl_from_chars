@@ -122,6 +122,10 @@ constexpr long double decfloat(auto& f, int c, int bits, int emin, int sign, int
 	if (gotdig && (c|32)=='e' && fmt != chars_format::fixed) {
 		e10 = scanexp(f, pok);
 		if (e10 == LLONG_MIN) {
+			if (fmt == chars_format::scientific) {
+				f.err = EINVAL;
+				return 0;
+			}
 			if (pok) {
 				shunget(f);
 			} else {
@@ -321,7 +325,7 @@ constexpr long double decfloat(auto& f, int c, int bits, int emin, int sign, int
 	return scalbnl(y, e2);
 }
 
-constexpr long double hexfloat(auto& f, int bits, int emin, int sign, int pok)
+constexpr long double hexfloat(auto& f, int bits, int emin, int sign, int pok, chars_format fmt)
 {
 	uint32_t x = 0;
 	long double y = 0;
@@ -367,14 +371,20 @@ constexpr long double hexfloat(auto& f, int bits, int emin, int sign, int pok)
 		}
 	}
 	if (!gotdig) {
-		shunget(f);
-		if (pok) {
+		if (fmt == chars_format::strtod) {
 			shunget(f);
-			if (gotrad) shunget(f);
+			if (pok) {
+				shunget(f);
+				if (gotrad) shunget(f);
+			} else {
+				shlim(f, 0);
+			}
+			return sign * 0.0;
 		} else {
-			shlim(f, 0);
+			// chars_format::hex
+			f.err = EINVAL;
+			return 0;
 		}
-		return sign * 0.0;
 	}
 	if (!gotrad) rp = dc;
 	while (dc<8) x *= 16, dc++;
@@ -512,14 +522,14 @@ constexpr long double __floatscan(auto& f, int prec, int pok, chars_format fmt)
 	if (c=='0' && fmt == chars_format::strtod) {
 		c = shgetc(f);
 		if ((c|32) == 'x')
-			return hexfloat(f, bits, emin, sign, pok);
+			return hexfloat(f, bits, emin, sign, pok, fmt);
 		shunget(f);
 		c = '0';
 	}
 
 	if (fmt == chars_format::hex) {
 		shunget(f);
-		return hexfloat(f, bits, emin, sign, pok);
+		return hexfloat(f, bits, emin, sign, pok, fmt);
 	}
 	return decfloat(f, c, bits, emin, sign, pok, fmt);
 }
