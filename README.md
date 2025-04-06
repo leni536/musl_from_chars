@@ -21,3 +21,8 @@ I recommend a shallow clone when checkout out the repository, as it includes the
   * Your standard library's implementation and [fastfloat/fast_float](https://github.com/fastfloat/fast_float) are faster.
 * Support for decimal floating point.
 * Maintaining a production library.
+
+## License
+The files under the directories `include` and `src` are MIT-licensed, with the detailed license text in `COPYRIGHT`.
+
+The tests under `tests/` are borrowed from various other projects with various licenses.
