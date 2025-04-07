@@ -37,12 +37,14 @@ jobs:
           python-version: '3.12'
 
       - name: Run Python script
-        run: python scripts/amalgamate.py > musl_from_chars.h
+        run: |
+          mkdir pages
+          python scripts/amalgamate.py > pages/musl_from_chars.h
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./musl_from_chars.h
+          path: pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
