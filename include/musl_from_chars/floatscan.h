@@ -9,8 +9,10 @@
 #include <limits.h>
 #include <errno.h>
 
+#ifndef MUSL_FROM_CHARS_AMALGAMATED_INTERFACE
 #include "chars_format.h"
 #include "shgetc.h"
+#endif
 
 #include <limits>
 

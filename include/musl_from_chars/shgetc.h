@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <string_view>
 
+#ifndef MUSL_FROM_CHARS_AMALGAMATED_INTERFACE
 #include "fake_file.h"
+#endif
 
 namespace musl_from_chars::detail {
 
