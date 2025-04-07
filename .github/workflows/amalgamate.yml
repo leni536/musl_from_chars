@@ -1,0 +1,28 @@
+name: Amalgamate
+
+on:
+  push:
+    branches:
+      - amalgamate
+
+jobs:
+  create-artifact:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Run Python script
+        run: python scripts/amalgamate.py > musl_from_chars.h
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: musl_from_chars.h
+          path: ./musl_from_chars.h
